@@ -118,27 +118,19 @@ for fl in "${font_subsets[@]}"; do
     fi
 done
 
-# 预训练权重配置
-if [ "$TARGET" = "en_US" ] || [ "$TARGET" = "en" ]; then
-    TARGET_PRETRAINED="$pretrained_model/en_PP-OCRv5_mobile_rec_pretrained.pdparams"
-    LOCAL_PRETRAINED="${LOCAL_PRETRAINED:-}"
-    if [ -n "$LOCAL_PRETRAINED" ] && [ -f "$LOCAL_PRETRAINED" ] && [ ! -f "$TARGET_PRETRAINED" ]; then
-        echo "发现指定的本地预训练模型，复制到项目目录: $LOCAL_PRETRAINED"
-        cp "$LOCAL_PRETRAINED" "$TARGET_PRETRAINED"
-    elif [ ! -f "$TARGET_PRETRAINED" ]; then
-        echo "下载 en_PP-OCRv5_mobile 预训练模型..."
-        download_file \
-            "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_pretrained_model/en_PP-OCRv5_mobile_rec_pretrained.pdparams" \
-            "$pretrained_model" \
-            "en_PP-OCRv5_mobile_rec_pretrained.pdparams"
-    fi
-elif [ "$TARGET" = "all" ] || [ "$TARGET" = "multi" ]; then
-    if [ ! -f "$pretrained_model/PP-OCRv6_medium_rec_pretrained.pdparams" ]; then
-        download_file \
-            "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_pretrained_model/PP-OCRv6_medium_rec_pretrained.pdparams" \
-            "$pretrained_model" \
-            "PP-OCRv6_medium_rec_pretrained.pdparams"
-    fi
+# 预训练权重配置 (针对 en_PP-OCRv5_mobile_rec，支持通过 LOCAL_PRETRAINED 环境变量指定本地路径)
+TARGET_PRETRAINED="$pretrained_model/en_PP-OCRv5_mobile_rec_pretrained.pdparams"
+LOCAL_PRETRAINED="${LOCAL_PRETRAINED:-}"
+
+if [ -n "$LOCAL_PRETRAINED" ] && [ -f "$LOCAL_PRETRAINED" ] && [ ! -f "$TARGET_PRETRAINED" ]; then
+    echo "发现指定的本地预训练模型，复制到项目目录: $LOCAL_PRETRAINED"
+    cp "$LOCAL_PRETRAINED" "$TARGET_PRETRAINED"
+elif [ ! -f "$TARGET_PRETRAINED" ]; then
+    echo "下载 en_PP-OCRv5_mobile 预训练模型..."
+    download_file \
+        "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_pretrained_model/en_PP-OCRv5_mobile_rec_pretrained.pdparams" \
+        "$pretrained_model" \
+        "en_PP-OCRv5_mobile_rec_pretrained.pdparams"
 fi
 
 ###### 以下是离线操作了 ######

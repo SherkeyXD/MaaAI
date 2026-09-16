@@ -1,4 +1,4 @@
-ARG PRETRAINED_MODEL=PP-OCRv6_medium_rec_pretrained.pdparams
+ARG PRETRAINED_MODEL=en_PP-OCRv5_mobile_rec_pretrained.pdparams
 ARG VERSION=3.0.0
 FROM paddlepaddle/paddle:${VERSION}-gpu-cuda11.8-cudnn8.9-trt8.6
 

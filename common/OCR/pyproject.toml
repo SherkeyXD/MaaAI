@@ -1,7 +1,7 @@
 [project]
 name = "maa-ocr"
 version = "0.1.0"
-description = "Arknights OCR dataset generation and PP-OCRv6 fine-tuning"
+description = "Arknights OCR dataset generation and recognition model fine-tuning"
 requires-python = ">=3.11"
 dependencies = [
     "fonttools",

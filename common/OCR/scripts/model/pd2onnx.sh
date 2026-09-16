@@ -6,21 +6,8 @@ if ! command -v paddle2onnx > /dev/null 2>&1; then
     exit 1
 fi
 
-if [ -z "${1:-}" ]; then
-    if [ -d "./models/output/en_PP-OCRv5_mobile_rec/inference" ]; then
-        MODEL_DIR="./models/output/en_PP-OCRv5_mobile_rec/inference"
-        SAVE_FILE="./models/output/en_PP-OCRv5_mobile_rec/inference.onnx"
-    elif [ -d "./models/output/PP-OCRv6_medium_rec/inference" ]; then
-        MODEL_DIR="./models/output/PP-OCRv6_medium_rec/inference"
-        SAVE_FILE="./models/output/PP-OCRv6_medium_rec/inference.onnx"
-    else
-        MODEL_DIR="./models/output/en_PP-OCRv5_mobile_rec/inference"
-        SAVE_FILE="./models/output/en_PP-OCRv5_mobile_rec/inference.onnx"
-    fi
-else
-    MODEL_DIR="$1"
-    SAVE_FILE="${2:-$MODEL_DIR/../inference.onnx}"
-fi
+MODEL_DIR="${1:-./models/output/en_PP-OCRv5_mobile_rec/inference}"
+SAVE_FILE="${2:-./models/output/en_PP-OCRv5_mobile_rec/inference.onnx}"
 
 if [ -f "$MODEL_DIR/inference.json" ]; then
     MODEL_FILE="inference.json"
