@@ -97,11 +97,11 @@ bash ./scripts/generate_dataset.sh all
 
 ```bash
 # 训练单语言轻量模型 (en_PP-OCRv5_mobile_rec)
-# 本机 CPU 模式（M 系列芯片，约 15~20 分钟收敛）：
+# 默认已开启 GPU（NVIDIA 显卡约 3~5 分钟收敛）：
 python "$PADDLEOCR_DIR/tools/train.py" -c models/configs/en_PP-OCRv5_mobile_rec.yml
 
-# 若在带有 NVIDIA GPU 的服务器上训练，可追加 -o Global.use_gpu=true（仅需 2~3 分钟）：
-# python "$PADDLEOCR_DIR/tools/train.py" -c models/configs/en_PP-OCRv5_mobile_rec.yml -o Global.use_gpu=true
+# 若在 CPU 机器上测试，可追加 -o Global.use_gpu=false：
+# python "$PADDLEOCR_DIR/tools/train.py" -c models/configs/en_PP-OCRv5_mobile_rec.yml -o Global.use_gpu=false
 ```
 
 ### 4. 评估与导出

@@ -1,16 +1,16 @@
 Global:
   model_name: en_PP-OCRv5_mobile_rec
   debug: false
-  use_gpu: false # 在 macOS 上默认使用 CPU；在带有 CUDA 的 Linux 机器上可通过 -o Global.use_gpu=true 覆盖
-  epoch_num: 8
+  use_gpu: true
+  epoch_num: 50
   log_smooth_window: 20
   print_batch_step: 10
   save_model_dir: ./models/output/en_PP-OCRv5_mobile_rec
-  save_epoch_step: 2
-  eval_batch_step: [0, 500]
-  cal_metric_during_train: false # 核心加速点：关闭训练阶段每 10 个 Batch 的 CTC Greedy 解码计算
+  save_epoch_step: 10
+  eval_batch_step: [0, 2000]
+  cal_metric_during_train: true
   pretrained_model: ./models/pretrained/en_PP-OCRv5_mobile_rec_pretrained.pdparams
-  checkpoints: ./models/output/en_PP-OCRv5_mobile_rec/latest
+  checkpoints: null # 初次训练设为 null；若需断点续训可指定 ./models/output/en_PP-OCRv5_mobile_rec/latest
   save_inference_dir: ./models/output/en_PP-OCRv5_mobile_rec/inference
   use_visualdl: false
   infer_img:
@@ -18,7 +18,7 @@ Global:
   max_text_length: &max_text_length 25
   infer_mode: false
   use_space_char: true
-  distributed: false
+  distributed: true
   save_res_path: ./models/output/en_PP-OCRv5_mobile_rec/predicts.txt
   d2s_train_image_shape: [3, 48, 320]
 
@@ -29,7 +29,7 @@ Optimizer:
   lr:
     name: Cosine
     learning_rate: 0.0005
-    warmup_epoch: 1
+    warmup_epoch: 5
   regularizer:
     name: L2
     factor: 3.0e-05
@@ -97,7 +97,7 @@ Train:
     shuffle: true
     batch_size_per_card: 64
     drop_last: true
-    num_workers: 8
+    num_workers: 4 # Windows 下建议 2~4，避免多进程 spawn 开销与内存争抢
 
 Eval:
   dataset:

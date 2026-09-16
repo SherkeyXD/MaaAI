@@ -149,6 +149,9 @@ pretrained_model/
 !/common/OCR/models/output/.gitkeep
 /common/OCR/models/pretrained/*
 !/common/OCR/models/pretrained/.gitkeep
+/common/OCR/*.tar.gz
+/common/OCR/*.zip
+/common/OCR/*.7z
 
 # IDE files
 /.vs
