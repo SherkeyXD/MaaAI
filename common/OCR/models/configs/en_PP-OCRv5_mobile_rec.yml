@@ -1,0 +1,127 @@
+Global:
+  model_name: en_PP-OCRv5_mobile_rec
+  debug: false
+  use_gpu: false # 在 macOS 上默认使用 CPU；在带有 CUDA 的 Linux 机器上可通过 -o Global.use_gpu=true 覆盖
+  epoch_num: 8
+  log_smooth_window: 20
+  print_batch_step: 10
+  save_model_dir: ./models/output/en_PP-OCRv5_mobile_rec
+  save_epoch_step: 2
+  eval_batch_step: [0, 500]
+  cal_metric_during_train: false # 核心加速点：关闭训练阶段每 10 个 Batch 的 CTC Greedy 解码计算
+  pretrained_model: ./models/pretrained/en_PP-OCRv5_mobile_rec_pretrained.pdparams
+  checkpoints: ./models/output/en_PP-OCRv5_mobile_rec/latest
+  save_inference_dir: ./models/output/en_PP-OCRv5_mobile_rec/inference
+  use_visualdl: false
+  infer_img:
+  character_dict_path: ./datasets/keys/en_US.txt
+  max_text_length: &max_text_length 25
+  infer_mode: false
+  use_space_char: true
+  distributed: false
+  save_res_path: ./models/output/en_PP-OCRv5_mobile_rec/predicts.txt
+  d2s_train_image_shape: [3, 48, 320]
+
+Optimizer:
+  name: Adam
+  beta1: 0.9
+  beta2: 0.999
+  lr:
+    name: Cosine
+    learning_rate: 0.0005
+    warmup_epoch: 1
+  regularizer:
+    name: L2
+    factor: 3.0e-05
+
+Architecture:
+  model_type: rec
+  algorithm: SVTR_LCNet
+  Transform:
+  Backbone:
+    name: PPLCNetV3
+    scale: 0.95
+  Head:
+    name: MultiHead
+    head_list:
+      - CTCHead:
+          Neck:
+            name: svtr
+            dims: 120
+            depth: 2
+            hidden_dims: 120
+            kernel_size: [1, 3]
+            use_guide: True
+          Head:
+            fc_decay: 0.00001
+      - NRTRHead:
+          nrtr_dim: 384
+          max_text_length: *max_text_length
+
+Loss:
+  name: MultiLoss
+  loss_config_list:
+    - CTCLoss:
+    - NRTRLoss:
+
+PostProcess:  
+  name: CTCLabelDecode
+
+Metric:
+  name: RecMetric
+  main_indicator: acc
+  ignore_space: false
+
+Train:
+  dataset:
+    name: SimpleDataSet
+    data_dir: ./
+    label_file_list:
+    - ./datasets/generated/rec_gt_train.txt
+    transforms:
+    - DecodeImage:
+        img_mode: BGR
+        channel_first: false
+    - MultiLabelEncode:
+        gtc_encode: NRTRLabelEncode
+    - RecResizeImg:
+        image_shape: [3, 48, 320]
+    - KeepKeys:
+        keep_keys:
+        - image
+        - label_ctc
+        - label_gtc
+        - length
+        - valid_ratio
+  loader:
+    shuffle: true
+    batch_size_per_card: 64
+    drop_last: true
+    num_workers: 8
+
+Eval:
+  dataset:
+    name: SimpleDataSet
+    data_dir: ./
+    label_file_list:
+    - ./datasets/generated/rec_gt_test.txt
+    transforms:
+    - DecodeImage:
+        img_mode: BGR
+        channel_first: false
+    - MultiLabelEncode:
+        gtc_encode: NRTRLabelEncode
+    - RecResizeImg:
+        image_shape: [3, 48, 320]
+    - KeepKeys:
+        keep_keys:
+        - image
+        - label_ctc
+        - label_gtc
+        - length
+        - valid_ratio
+  loader:
+    shuffle: false
+    drop_last: false
+    batch_size_per_card: 64
+    num_workers: 4

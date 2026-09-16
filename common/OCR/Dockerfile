@@ -9,7 +9,7 @@ RUN git clone https://gitee.com/paddlepaddle/PaddleOCR.git  /PaddleOCR  --depth=
     pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install opencv-python-headless -i https://pypi.tuna.tsinghua.edu.cn/simple 
 
-COPY datasets/generated /workspace/datasets/generated
+COPY datasets /workspace/datasets
 COPY models/pretrained/$PRETRAINED_MODEL /workspace/models/pretrained/$PRETRAINED_MODEL
 COPY models/configs /workspace/models/configs
 WORKDIR /workspace
