@@ -125,6 +125,9 @@ def parse_line(line):
                             if ord(w) not in unicode_map.keys():
                                 not_support = True
                                 break
+                            if client == "en_US" and (ord(w) < 32 or ord(w) > 126):
+                                not_support = True
+                                break
                         if not not_support and not is_punct_only(l):
                             loc_lines.add(l)
                     result.update(loc_lines)
@@ -165,6 +168,8 @@ for k in all_context:
 with open(args.keys_dir / f'{client}.txt', 'r', encoding='utf-8') as f:
     key_text = f.read()
 for k in keys:
+    if client == "en_US" and (ord(k) < 32 or ord(k) > 126):
+        continue
     if k not in key_text:
         key_text += k + "\n"
 # 过滤掉不属于目标客户端书写系统的字符和遮挡符

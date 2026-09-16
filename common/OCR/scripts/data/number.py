@@ -57,7 +57,7 @@ def generate_numbers(lang: ClientLang, counts: Tuple = (10000, 20)):
             else:
                 numbers.append(f"{int(v)}{unit}")
 
-    numbers += [str(x) for x in range(1, 400)]
+    numbers += [str(x) for x in range(1, 1000)]
     return numbers
 
 
@@ -65,6 +65,48 @@ def generate_other():
     # For Public Recruitment
     numbers = ['0' + str(x) for x in range(10)]
     numbers += [str(x) for x in range(10, 60)]
+
+    # Item drop quantities (e.g. x1, x2, x10)
+    numbers += [f"x{x}" for x in range(1, 100)]
+    numbers += [f"x{x}" for x in (120, 150, 200, 300, 500, 999)]
+
+    # Sanity, kill progress, inventory fractions (e.g. 0/210, 135/210, 210/210, 999/210)
+    fractions = []
+    # Doctor sanity caps from level 1 up to current max 210
+    sanity_caps = [
+        80, 84, 90, 95, 100, 105, 110, 115, 120, 125, 128, 130, 135,
+        140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210
+    ]
+    for tot in sanity_caps:
+        # Standard values up to cap
+        for cur in (0, 1, 5, 10, 15, 18, 20, 21, 24, 30, 36, 50, 60, 100, 120, 135, 150, 180, 200, tot - 1, tot):
+            if cur <= tot:
+                fractions.append(f"{cur}/{tot}")
+        # Overflow sanity (eating potions / originite prime up to 999+)
+        for cur in (tot + 1, tot + 60, tot + 100, tot + 120, 250, 300, 400, 500, 700, 999, 1000):
+            fractions.append(f"{cur}/{tot}")
+
+    # General battle kills / task progress fractions
+    for tot in (10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 75, 80, 100):
+        for cur in (0, 1, 5, tot // 2, tot - 1, tot):
+            fractions.append(f"{cur}/{tot}")
+    numbers += fractions
+
+    # Percentages & Discounts (e.g. 99%, 50%, 100%)
+    numbers += [f"{x}%" for x in (5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 99, 100)]
+
+    # Timers (e.g. 01:58, 09:00, 00:00)
+    timers = []
+    for h in range(10):
+        for m in (0, 15, 30, 45, 58):
+            timers.append(f"0{h}:{m:02d}")
+    numbers += timers
+
+    # DP costs and level indicators (e.g. -5, +1, Lv.50, E2)
+    numbers += [f"-{x}" for x in range(1, 30)]
+    numbers += [f"+{x}" for x in range(1, 30)]
+    numbers += [f"Lv.{x}" for x in (1, 10, 20, 30, 40, 50, 60, 70, 80, 90)]
+    numbers += ["MISSION", "RESULTS", "EXP", "COMPLETE", "FAILED", "AUTO"]
 
     # All Chars
     numbers += [chr(x) for x in range(33, 127)]
