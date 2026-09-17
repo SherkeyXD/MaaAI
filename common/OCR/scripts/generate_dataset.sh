@@ -146,10 +146,11 @@ for item in "${clients[@]}"; do
 
     num_img_fraction=$((num_img / 100))
     if [ "$client" = "en_US" ]; then
-        # en_US / ASCII 场景重点强化数字、关卡代号、DP、公招时间与简短文本
-        num_short_img=$((num_img_fraction * 35))
-        num_long_img=$((num_img_fraction * 15))
-        num_number_img=$((num_img_fraction * 50))
+        # en_US / ASCII 场景重点强化数字、关卡代号、DP、公招时间与掉落（占比 70%）
+        # 英文专有名词与词汇采用 list 模式整词渲染（占比 30%），禁用中文字符滑窗切碎
+        num_number_img=$((num_img_fraction * 70))
+        num_short_img=$((num_img_fraction * 30))
+        num_long_img=0
     else
         num_short_img=$((num_img_fraction * 30))
         num_long_img=$((num_img_fraction * 60))
@@ -158,13 +159,20 @@ for item in "${clients[@]}"; do
     output="datasets/generated/render"
     fonts_list="$fonts_dir/fonts_${client}.txt"
 
-    $PY "$renderer_dir/main.py" --fonts_list "$fonts_list" --config_file datasets/render.yaml --img_width=0 --corpus_dir "datasets/generated/$client/short/" --corpus_mode=list --num_img "$num_short_img" --chars_file="datasets/generated/$client/keys_render.txt" --strict --output_dir="$output/$client/short"
-    $PY "$renderer_dir/main.py" --fonts_list "$fonts_list" --config_file datasets/render.yaml --img_width=0 --corpus_dir "datasets/generated/$client/long/" --corpus_mode=chn --length=7 --num_img "$num_long_img" --chars_file="datasets/generated/$client/keys_render.txt" --strict --output_dir="$output/$client/long"
-    $PY "$renderer_dir/main.py" --fonts_list "$fonts_list" --config_file datasets/render.yaml --img_width=0 --corpus_dir "datasets/generated/$client/number/" --corpus_mode=list --num_img "$num_number_img" --chars_file="datasets/generated/$client/keys_render.txt" --strict --output_dir="$output/$client/number"
+    if [ "$num_short_img" -gt 0 ]; then
+        $PY "$renderer_dir/main.py" --fonts_list "$fonts_list" --config_file datasets/render.yaml --img_width=0 --corpus_dir "datasets/generated/$client/short/" --corpus_mode=list --num_img "$num_short_img" --chars_file="datasets/generated/$client/keys_render.txt" --strict --output_dir="$output/$client/short"
+        $PY ./scripts/data/train_test_split.py "$output/$client/short/default/tmp_labels.txt" -o "$output/$client/short/default"
+    fi
 
-    $PY ./scripts/data/train_test_split.py "$output/$client/short/default/tmp_labels.txt" -o "$output/$client/short/default"
-    $PY ./scripts/data/train_test_split.py "$output/$client/long/default/tmp_labels.txt" -o "$output/$client/long/default"
-    $PY ./scripts/data/train_test_split.py "$output/$client/number/default/tmp_labels.txt" -o "$output/$client/number/default"
+    if [ "$num_long_img" -gt 0 ]; then
+        $PY "$renderer_dir/main.py" --fonts_list "$fonts_list" --config_file datasets/render.yaml --img_width=0 --corpus_dir "datasets/generated/$client/long/" --corpus_mode=chn --length=7 --num_img "$num_long_img" --chars_file="datasets/generated/$client/keys_render.txt" --strict --output_dir="$output/$client/long"
+        $PY ./scripts/data/train_test_split.py "$output/$client/long/default/tmp_labels.txt" -o "$output/$client/long/default"
+    fi
+
+    if [ "$num_number_img" -gt 0 ]; then
+        $PY "$renderer_dir/main.py" --fonts_list "$fonts_list" --config_file datasets/render.yaml --img_width=0 --corpus_dir "datasets/generated/$client/number/" --corpus_mode=list --num_img "$num_number_img" --chars_file="datasets/generated/$client/keys_render.txt" --strict --output_dir="$output/$client/number"
+        $PY ./scripts/data/train_test_split.py "$output/$client/number/default/tmp_labels.txt" -o "$output/$client/number/default"
+    fi
 
     $PY ./scripts/data/build_ppocr_labels.py "$output/$client" "datasets/generated/$client" "$client"
 done

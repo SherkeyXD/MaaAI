@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import re
 from pathlib import Path
@@ -139,6 +140,54 @@ def parse_line(line):
     return result
 
 
+def extract_structured_en_terms(excel_dir: Path):
+    """提取明日方舟专有名词（干员英文名、道具名、关卡名、UI 标语）"""
+    terms = set()
+
+    # 1. 干员名
+    char_file = excel_dir / 'character_table.json'
+    if char_file.exists():
+        with open(char_file, 'r', encoding='utf-8') as f:
+            chars = json.load(f)
+        for c in chars.values():
+            name = (c.get('name') or '').strip().strip("'\"")
+            if name and name.isascii() and 2 <= len(name) <= 25 and not name.startswith('char_'):
+                terms.add(name)
+
+    # 2. 道具与材料名
+    item_file = excel_dir / 'item_table.json'
+    if item_file.exists():
+        with open(item_file, 'r', encoding='utf-8') as f:
+            items = json.load(f).get('items', {})
+        for i in items.values():
+            name = (i.get('name') or '').strip().strip("'\"")
+            if name and name.isascii() and 2 <= len(name) <= 25:
+                terms.add(name)
+
+    # 3. 关卡显示名
+    stage_file = excel_dir / 'stage_table.json'
+    if stage_file.exists():
+        with open(stage_file, 'r', encoding='utf-8') as f:
+            stages = json.load(f).get('stages', {})
+        for s in stages.values():
+            name = (s.get('name') or '').strip().strip("'\"")
+            if name and name.isascii() and 2 <= len(name) <= 25:
+                terms.add(name)
+
+    # 4. 游戏 UI 核心关键词
+    ui_keywords = [
+        "MISSION", "RESULTS", "EXP", "COMPLETE", "FAILED", "AUTO",
+        "SANITY", "DROP", "COST", "STAGE", "PRTS", "PAUSE", "START",
+        "DEFEAT", "VICTORY", "LEVEL", "CONFIRM", "CANCEL", "RETRY",
+        "FARM", "RECRUIT", "TOTAL", "TIME", "CLEAR", "NORMAL", "HARD", "CHALLENGE",
+        "Vanguard", "Guard", "Sniper", "Caster", "Medic", "Defender", "Supporter", "Specialist",
+        "Elite", "Target", "Operator", "Sanity", "Originite", "Orundum", "LMD", "Pure Gold",
+        "Practice", "Drill", "Battle", "Support", "Deploy", "Retreat", "Speed", "Pause"
+    ]
+    terms.update(ui_keywords)
+    return terms
+
+
 def find_all_wording(dir):
     result = set()
     for root, _, files in os.walk(dir):
@@ -151,7 +200,13 @@ def find_all_wording(dir):
     return result
 
 
-wording = find_all_wording(args.game_data / CLIENT_DIR_MAP[client] / 'gamedata' / 'excel')
+excel_dir = args.game_data / CLIENT_DIR_MAP[client] / 'gamedata' / 'excel'
+wording = find_all_wording(excel_dir)
+
+if client == "en_US":
+    # 针对 en_US 注入完整的游戏内专有名词（干员、材料、UI 词）
+    wording.update(extract_structured_en_terms(excel_dir))
+
 wording.update(set([chr(x) for x in range(33, 127)]))
 output_dir = args.output_dir / client
 os.makedirs(output_dir, exist_ok=True)
@@ -185,13 +240,24 @@ render_key_text = ''.join(
 with open(os.path.join(output_dir, 'keys_render.txt'), 'w', encoding='utf-8') as f:
     f.write(render_key_text)
 
-short_context = '\n'.join([w for w in wording if len(w) < 7])
+if client == "en_US":
+    # en_US/ASCII 模式：所有长度 <= 25 的完整单词或短语均使用 list 模式整行渲染
+    # 彻底杜绝使用中文 7 字符滑窗截断导致的残损字母片段
+    valid_terms = sorted(list(set(
+        w.strip() for w in wording
+        if w and 2 <= len(w.strip()) <= 25 and w.isascii() and not is_punct_only(w.strip())
+    )))
+    short_context = '\n'.join(valid_terms)
+    long_context = short_context
+else:
+    short_context = '\n'.join([w for w in wording if len(w) < 7])
+    long_context = '\n'.join([w for w in wording if len(w) >= 7])
+
 short_output_dir = os.path.join(output_dir, 'short')
 os.makedirs(short_output_dir, exist_ok=True)
 with open(os.path.join(short_output_dir, 'short_wording.txt'), 'w', encoding='utf-8') as f:
     f.write(short_context)
 
-long_context = '\n'.join([w for w in wording if len(w) >= 7])
 long_output_dir = os.path.join(output_dir, 'long')
 os.makedirs(long_output_dir, exist_ok=True)
 with open(os.path.join(long_output_dir, 'long_wording.txt'), 'w', encoding='utf-8') as f:
